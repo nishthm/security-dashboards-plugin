@@ -120,7 +120,6 @@ export function RoleList(props: AppDependencies) {
   const [loading, setLoading] = useState(false);
   const [accessErrorFlag, setAccessErrorFlag] = React.useState(false);
   const { dataSource, setDataSource } = useContext(DataSourceContext)!;
-  const [isMultiTenancyEnabled, setIsMultiTenancyEnabled] = useState(true);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -147,12 +146,13 @@ export function RoleList(props: AppDependencies) {
     fetchData();
   }, [props.coreStart.http, dataSource]);
 
+  const [isMultiTenancyEnabled, setIsMultiTenancyEnabled] = useState(true);
   React.useEffect(() => {
     const fetchIsMultiTenancyEnabled = async () => {
       try {
         const dashboardsInfo = await getDashboardsInfoSafe(props.coreStart.http);
         setIsMultiTenancyEnabled(
-          dashboardsInfo?.multitenancy_enabled && props.config.multitenancy.enabled
+          Boolean(dashboardsInfo?.multitenancy_enabled && props.config.multitenancy.enabled)
         );
       } catch (e) {
         console.error(e);

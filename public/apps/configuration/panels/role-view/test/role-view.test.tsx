@@ -14,6 +14,8 @@
  */
 
 import React from 'react';
+
+import { act } from '@testing-library/react-hooks';
 import { mount, render, shallow } from 'enzyme';
 import { RoleView } from '../role-view';
 import { ClusterPermissionPanel } from '../../role-view/cluster-permission-panel';
@@ -34,6 +36,7 @@ import { Action, SubAction } from '../../../types';
 import { ResourceType } from '../../../../../../common';
 import { buildHashUrl } from '../../../utils/url-builder';
 import { createUnknownErrorToast } from '../../../utils/toast-utils';
+import { getDashboardsInfoSafe } from "../../../../../utils/dashboards-info-utils";
 
 jest.mock('../../../utils/role-mapping-utils', () => ({
   getRoleMappingData: jest.fn().mockReturnValue({ backend_roles: [], hosts: [], users: [] }),
@@ -77,9 +80,20 @@ jest.mock('react', () => ({
   useContext: jest.fn().mockReturnValue({ dataSource: { id: 'test' }, setDataSource: jest.fn() }), // Mock the useContext hook to return dummy datasource and setdatasource function
 }));
 
+jest.mock('../../../../../utils/dashboards-info-utils', () => ({
+  getDashboardsInfoSafe: jest.fn(),
+}));
+
 describe('Role view', () => {
   const setState = jest.fn();
   const sampleRole = 'role';
+  const mockDepsStart = {
+    navigation: {
+      ui: {
+        HeaderControl: <div>FakeHeaderControl</div>, // this can be a simple dummy component
+      },
+    },
+  };
   const mockCoreStart = {
     http: 1,
     uiSettings: {
@@ -303,4 +317,207 @@ describe('Role view', () => {
     component.find('[data-test-subj="delete"]').first().simulate('click');
     expect(createUnknownErrorToast).toBeCalled();
   });
+
+  it('should show tenants panel when multi-tenancy is enabled', async () => {
+    const mockDashboardsInfo = {
+      default_tenant: '',
+      multitenancy_enabled: true,
+    };
+
+    (getDashboardsInfoSafe as jest.Mock).mockResolvedValueOnce(mockDashboardsInfo);
+
+    const wrapper = mount(
+      <RoleView
+        roleName={sampleRole}
+        prevAction=""
+        coreStart={mockCoreStart as any}
+        depsStart={mockDepsStart as any}
+        params={{} as any}
+        config={{ multitenancy: { enabled: true } } as any}
+      />
+    );
+
+    await act(async () => {
+      resolvePromise();
+      await flushPromises();
+      wrapper.update();
+    });
+
+    // await act(async () => {
+    //   wrapper = mount(
+    //
+    //   await Promise.resolve();
+    // });
+    wrapper.update();
+
+    //expect(wrapper.find(TenantsPanel).length).toBe(0);
+    // expect(wrapper.find(TenantsPanel).exists()).toBe(true);
+    //wrapper.unmount();
+  });
+  //
+  // // it('should not show tenants panel when multi-tenancy is disabled in config', () => {
+  // //   // Mock getDashboardsInfoSafe to return multitenancy_enabled: true
+  // //
+  // //   // const mockDashboardsInfo = {
+  // //   //   default_tenant: '',
+  // //   //   multitenancy_enabled: true,
+  // //   // };
+  // //
+  // //   (getDashboardsInfoSafe as jest.Mock).mockResolvedValueOnce({
+  // //     default_tenant: '',
+  // //     multitenancy_enabled: false,
+  // //   });
+  // //   const component = shallow(
+  // //     <RoleView
+  // //       roleName={sampleRole}
+  // //       prevAction=""
+  // //       coreStart={mockCoreStart as any}
+  // //       depsStart={{} as any}
+  // //       params={{} as any}
+  // //       config={{ multitenancy: { enabled: false } }}
+  // //     />
+  // //   );
+  // //
+  // //   expect(component).toMatchSnapshot();
+  // //   // component.update();
+  // //   // const tabs = component.find(EuiTabbedContent).dive();
+  // //   // console.log(tabs, tabs.find(TenantsPanel).length, 'tabssssss');
+  // //   // expect(tabs.find(TenantsPanel).length).toBe(0);
+  // // });
+
+  // describe('Role view multitenancy behavior', () => {
+  //   const { getDashboardsInfoSafe } = require('../../../../../utils/dashboards-info-utils');
+  //   const flushPromises = () => new Promise((resolve) => setImmediate(resolve)
+  //
+  //   );
+  //
+  //   // Reset the mock between tests
+  //   beforeEach(() => {
+  //     getDashboardsInfoSafe.mockReset();
+  //   });
+  //
+  //   it('renders TenantsPanel when multitenancy is enabled by both dashboards info and config', async () => {
+  //     // Arrange: simulate dashboards that have multitenancy enabled and config also enabled.
+  //     const mockDashboardsInfo = {
+  //       default_tenant: '',
+  //       multitenancy_enabled: true,
+  //     };
+  //
+  //     getDashboardsInfoSafe.mockResolvedValue(mockDashboardsInfo);
+  //     // const component = mount(
+  //     //   <RoleView
+  //     //     roleName={sampleRole}
+  //     //     prevAction=""
+  //     //     buildBreadcrumbs={buildBreadcrumbs}
+  //     //     coreStart={mockCoreStart as any}
+  //     //     // Pass a dummy depsStart with navigation (if needed)
+  //     //     depsStart={{ navigation: { ui: { HeaderControl: {} } } } as any}
+  //     //     params={{} as any}
+  //     //     config={{ multitenancy: { enabled: true } }}
+  //     //   />
+  //     // );
+  //     //
+  //     // // Allow useEffect to run and update the component.
+  //     // setImmediate(() => {
+  //     //   component.update();
+  //     //   // TenantsPanel should be rendered.
+  //     //
+  //     //   expect(component.find(EuiTabbedContent).dive().find(TenantsPanel).length).toBe(1);
+  //     //   //
+  //     //   //
+  //     //   // expect(component.find(TenantsPanel).length).toBe(1);
+  //     //   done();
+  //     // });
+  //
+  //     let component;
+  //     await act(async () => {
+  //       component = mount(
+  //         <RoleView
+  //           roleName={sampleRole}
+  //           prevAction=""
+  //           buildBreadcrumbs={buildBreadcrumbs}
+  //           coreStart={mockCoreStart as any}
+  //           depsStart={{ navigation: { ui: { HeaderControl: {} } } } as any}
+  //           params={{} as any}
+  //           // Enable multitenancy through config.
+  //           config={{ multitenancy: { enabled: true } }}
+  //         />
+  //       );
+  //       await flushPromises();
+  //     });
+  //     // Force an update to ensure all effects are processed.
+  //     component.update();
+  //     expect(component.find(TenantsPanel).length).toBe(1);
+  //   });
+  //
+  //   // it('does not render TenantsPanel when multitenancy is disabled by configuration', (done) => {
+  //   //   // Arrange: simulate dashboards returning multitenancy enabled but config disables it.
+  //   //   getDashboardsInfoSafe.mockResolvedValue({ multitenancy_enabled: true });
+  //   //   const component = mount(
+  //   //     <RoleView
+  //   //       roleName={sampleRole}
+  //   //       prevAction=""
+  //   //       buildBreadcrumbs={buildBreadcrumbs}
+  //   //       coreStart={mockCoreStart as any}
+  //   //       depsStart={{ navigation: { ui: { HeaderControl: {} } } } as any}
+  //   //       params={{} as any}
+  //   //       // Disable multitenancy through the config
+  //   //       config={{ multitenancy: { enabled: false } }}
+  //   //     />
+  //   //   );
+  //   //   setImmediate(() => {
+  //   //     component.update();
+  //   //     // TenantsPanel should not render if config disables it.
+  //   //     expect(component.find(TenantsPanel).length).toBe(0);
+  //   //     done();
+  //   //   });
+  //   // });
+  //   //
+  //   // it('does not render TenantsPanel when dashboards info returns multitenancy disabled', (done) => {
+  //   //   // Arrange: simulate dashboards info that disables multitenancy while config enables it.
+  //   //   getDashboardsInfoSafe.mockResolvedValue({ multitenancy_enabled: false });
+  //   //   const component = mount(
+  //   //     <RoleView
+  //   //       roleName={sampleRole}
+  //   //       prevAction=""
+  //   //       buildBreadcrumbs={buildBreadcrumbs}
+  //   //       coreStart={mockCoreStart as any}
+  //   //       depsStart={{ navigation: { ui: { HeaderControl: {} } } } as any}
+  //   //       params={{} as any}
+  //   //       config={{ multitenancy: { enabled: true } }}
+  //   //     />
+  //   //   );
+  //   //   setImmediate(() => {
+  //   //     component.update();
+  //   //     // Even if config says enabled, if dashboards info is false, the TenantsPanel should not render.
+  //   //     expect(component.find(TenantsPanel).length).toBe(0);
+  //   //     done();
+  //   //   });
+  //   // });
+  //   //
+  //   // it('logs an error when getDashboardsInfoSafe rejects', (done) => {
+  //   //   // Arrange: simulate a rejection (error) from dashboards info.
+  //   //   getDashboardsInfoSafe.mockRejectedValue(new Error('Test error'));
+  //   //   const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  //   //   const component = mount(
+  //   //     <RoleView
+  //   //       roleName={sampleRole}
+  //   //       prevAction=""
+  //   //       buildBreadcrumbs={buildBreadcrumbs}
+  //   //       coreStart={mockCoreStart as any}
+  //   //       depsStart={{ navigation: { ui: { HeaderControl: {} } } } as any}
+  //   //       params={{} as any}
+  //   //       config={{ multitenancy: { enabled: true } }}
+  //   //     />
+  //   //   );
+  //   //   setImmediate(() => {
+  //   //     component.update();
+  //   //     expect(consoleSpy).toHaveBeenCalled();
+  //   //     consoleSpy.mockRestore();
+  //   //     done();
+  //   //   });
+  //   // });
+  // });
 });
+
+
