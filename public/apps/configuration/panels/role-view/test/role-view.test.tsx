@@ -14,7 +14,6 @@
  */
 
 import React from 'react';
-
 import { mount, render, shallow } from 'enzyme';
 import { RoleView } from '../role-view';
 import { ClusterPermissionPanel } from '../../role-view/cluster-permission-panel';
@@ -78,20 +77,9 @@ jest.mock('react', () => ({
   useContext: jest.fn().mockReturnValue({ dataSource: { id: 'test' }, setDataSource: jest.fn() }), // Mock the useContext hook to return dummy datasource and setdatasource function
 }));
 
-jest.mock('../../../../../utils/dashboards-info-utils', () => ({
-  getDashboardsInfoSafe: jest.fn(),
-}));
-
 describe('Role view', () => {
   const setState = jest.fn();
   const sampleRole = 'role';
-  const mockDepsStart = {
-    navigation: {
-      ui: {
-        HeaderControl: <div>FakeHeaderControl</div>, // this can be a simple dummy component
-      },
-    },
-  };
   const mockCoreStart = {
     http: 1,
     uiSettings: {
@@ -316,5 +304,3 @@ describe('Role view', () => {
     expect(createUnknownErrorToast).toBeCalled();
   });
 });
-
-
