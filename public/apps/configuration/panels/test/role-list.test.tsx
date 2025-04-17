@@ -26,11 +26,6 @@ import { getDashboardsInfoSafe } from '../../../../utils/dashboards-info-utils';
 import { act } from 'react-dom/test-utils';
 
 jest.mock('../../utils/role-list-utils');
-// jest.mock('../../utils/display-utils', () => ({
-//   ...jest.requireActual('../../utils/display-utils'),
-//   ExternalLink: jest.fn(),
-//   truncatedListView: jest.fn()
-// }));
 jest.mock('../../utils/context-menu', () => ({
   useContextMenuState: jest
     .fn()
