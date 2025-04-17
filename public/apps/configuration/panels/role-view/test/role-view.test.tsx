@@ -375,12 +375,6 @@ describe('RoleView base on Multitenancy', () => {
     };
     (getDashboardsInfoSafe as jest.Mock).mockResolvedValue(mockDashboardsInfo);
 
-    const mockRoleTenantPermission = {
-      tenant_patterns: ['dummy'],
-      permissionType: TenantPermissionType.Read,
-    };
-    (transformRoleTenantPermissions as jest.Mock).mockResolvedValue(mockRoleTenantPermission);
-
     let wrapper;
     await act(async () => {
       wrapper = mount(
@@ -411,12 +405,6 @@ describe('RoleView base on Multitenancy', () => {
     };
     (getDashboardsInfoSafe as jest.Mock).mockResolvedValue(mockDashboardsInfo);
 
-    const mockRoleTenantPermission = {
-      tenant_patterns: ['dummy'],
-      permissionType: TenantPermissionType.Read,
-    };
-    (transformRoleTenantPermissions as jest.Mock).mockResolvedValue(mockRoleTenantPermission);
-
     let wrapper;
     await act(async () => {
       wrapper = mount(
@@ -446,12 +434,6 @@ describe('RoleView base on Multitenancy', () => {
       multitenancy_enabled: false,
     };
     (getDashboardsInfoSafe as jest.Mock).mockResolvedValue(mockDashboardsInfo);
-
-    const mockRoleTenantPermission = {
-      tenant_patterns: ['dummy'],
-      permissionType: TenantPermissionType.Read,
-    };
-    (transformRoleTenantPermissions as jest.Mock).mockResolvedValue(mockRoleTenantPermission);
 
     let wrapper;
     await act(async () => {
