@@ -19,13 +19,13 @@ import { Action, RoleIndexPermissionView } from '../../../types';
 import { ResourceType } from '../../../../../../common';
 import {
   renderFieldLevelSecurity,
-  renderRowExpanstionArrow,
-  toggleRowDetails,
   IndexPermissionPanel,
   renderDocumentLevelSecurity,
 } from '../index-permission-panel';
-import { EuiSmallButtonIcon, EuiEmptyPrompt, EuiInMemoryTable } from '@elastic/eui';
+import { EuiEmptyPrompt, EuiInMemoryTable, EuiTableFieldDataColumnType } from "@elastic/eui";
 import { buildHashUrl } from '../../../utils/url-builder';
+import { RoleList } from "../../role-list";
+import { RoleListing } from "../../../utils/role-list-utils";
 
 describe('Role view - index permission panel', () => {
   const sampleRoleName = 'role1';
@@ -38,46 +38,6 @@ describe('Role view - index permission panel', () => {
     allowed_actions: [],
   };
   const setMap = jest.fn();
-
-  it('Toggle row details', () => {
-    toggleRowDetails(sampleRoleIndexPermission, {}, setMap);
-    const updateMapFunc = setMap.mock.calls[0][0];
-    updateMapFunc({ group: '' });
-  });
-
-  describe('Render row expanstion arrow', () => {
-    it('should render down arrow when collapsed', () => {
-      const renderFunc = renderRowExpanstionArrow({}, {}, jest.fn());
-      const Wrapper = () => <>{renderFunc(sampleRoleIndexPermission)}</>;
-      const component = shallow(<Wrapper />);
-
-      expect(component.find(EuiSmallButtonIcon).prop('iconType')).toBe('arrowDown');
-    });
-
-    it('should render up arrow when expanded', () => {
-      const renderFunc = renderRowExpanstionArrow(
-        { [sampleRoleIndexPermission.id]: sampleRoleIndexPermission },
-        {},
-        jest.fn()
-      );
-      const Wrapper = () => <>{renderFunc(sampleRoleIndexPermission)}</>;
-      const component = shallow(<Wrapper />);
-
-      expect(component.find(EuiSmallButtonIcon).prop('iconType')).toBe('arrowUp');
-    });
-
-    it('renders when arrow expanded', () => {
-      const renderFunc = renderRowExpanstionArrow(
-        { [sampleRoleIndexPermission.id]: sampleRoleIndexPermission },
-        {},
-        jest.fn()
-      );
-      const Wrapper = () => <>{renderFunc(sampleRoleIndexPermission)}</>;
-      const component = shallow(<Wrapper />);
-      component.find(EuiSmallButtonIcon).simulate('click');
-      expect(component).toMatchSnapshot();
-    });
-  });
 
   describe('Render field level security', () => {
     const field = 'fls';
@@ -211,5 +171,78 @@ describe('Role view - index permission panel', () => {
         buildHashUrl(ResourceType.roles, Action.edit, sampleRoleName)
       );
     });
+
+    it('should render everything on index permission panel', () => {
+      const wrapper = mount(
+        <IndexPermissionPanel
+          roleName={sampleRoleName}
+          indexPermissions={["test0_*", "test_*", "test1_*", "test2_*"]}
+          actionGroups={{}}
+          errorFlag={false}
+          loading={false}
+          isReserved={true}
+        />
+      );
+
+      const prompt = wrapper
+        .find('[data-test-subj="index-permission-container"] tbody EuiEmptyPrompt')
+        .first()
+        .getElement();
+      const component = shallow(prompt);
+      component.find('[data-test-subj="addIndexPermission"]').simulate('click');
+      expect(window.location.hash).toBe(
+        buildHashUrl(ResourceType.roles, Action.edit, sampleRoleName)
+      );
+    });
+  });
+});
+
+
+describe('Render columns', () => {
+  beforeEach(() => {
+    jest.spyOn(React, 'useState').mockRestore();
+    jest
+      .spyOn(React, 'useState')
+      .mockImplementationOnce(() => [[], jest.fn()])
+      .mockImplementationOnce(() => [false, jest.fn()])
+      .mockImplementationOnce(() => [[], jest.fn()])
+      .mockImplementationOnce(() => [false, jest.fn()]);
+  });
+  it('render role name column', () => {
+    const wrapper = shallow(
+      <RoleList
+        coreStart={mockCoreStart as any}
+        depsStart={{ navigation: {} }}
+        params={{} as any}
+        config={{} as any}
+      />
+    );
+    const roleList = wrapper.find('[data-test-subj="role-list"]');
+    const component = mount(<>{roleList}</>);
+    const columns = component.prop<Array<EuiTableFieldDataColumnType<RoleListing>>>('columns');
+
+    const roleNameRenderer = columns[0].render as (roleName: string) => JSX.Element;
+    const Container = (props: { roleName: string }) => roleNameRenderer(props.roleName);
+    const result = shallow(<Container roleName={'role1'} />);
+    expect(result).toMatchSnapshot();
+  });
+
+  it('render Customization column', () => {
+    const wrapper = shallow(
+      <RoleList
+        coreStart={mockCoreStart as any}
+        depsStart={{ navigation: {} }}
+        params={{} as any}
+        config={{} as any}
+      />
+    );
+    const roleList = wrapper.find('[data-test-subj="role-list"]');
+    const component = mount(<>{roleList}</>);
+    const columns = component.prop<Array<EuiTableFieldDataColumnType<RoleListing>>>('columns');
+
+    const customizationRenderer = columns[6].render as (reserved: boolean) => JSX.Element;
+    const Container = (props: { reserved: boolean }) => customizationRenderer(props.reserved);
+    const result = shallow(<Container reserved={true} />);
+    expect(result).toMatchSnapshot();
   });
 });
